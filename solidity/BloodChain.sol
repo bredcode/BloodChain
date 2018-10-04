@@ -34,7 +34,19 @@ contract BloodChain {
         string sex;
         uint donationDay;
     }
+    struct questionnaire{
+        address addr;
+        string age;
+        string name;
+        string sex;
+        string residentRegistrationNumber;
 
+        /* Delete the annotations in the full version */
+        // bool areYouWell;
+        // bool vaccinationIn3Month;
+        // bool takenMedicineIn3Month;
+        // bool malariaZone;
+    }
     struct user{
         address addr;
         string name;
@@ -49,6 +61,7 @@ contract BloodChain {
         string location;
         string phoneNumber;
         string country;
+        questionnaire[] questionnaireList;
     }
     struct hospital{
         address addr;
@@ -68,11 +81,12 @@ contract BloodChain {
     mapping(uint => user) userMap;
     mapping(uint => bloodDonationHouse) bloodDonationHouseMap;
     mapping(uint => hospital) hospitalMap;
-    function createUser(address _addr, string _name, string _sex, string _country, uint _birth) public {
-        addrInfoMap[_addr].idx = idx;
-        addrInfoMap[_addr].state = 1;
+    mapping(string => uint) questionnaireMap;
+    function createUser(string _name, string _sex, string _country, uint _birth) public {
+        addrInfoMap[msg.sender].idx = idx;
+        addrInfoMap[msg.sender].state = 1;
 
-        userMap[idx].addr = _addr;
+        userMap[idx].addr = msg.sender;
         userMap[idx].name = _name;
         userMap[idx].sex = _sex;
         userMap[idx].country = _country;
@@ -80,23 +94,24 @@ contract BloodChain {
 
         idx++;
     }
-    function createBloodDonationHouse(address _addr, string _name, string _location, string _phoneNumber, string _country) public {
-        addrInfoMap[_addr].idx = idx;
-        addrInfoMap[_addr].state = 2;
+    function createBloodDonationHouse(string _name, string _location, string _phoneNumber, string _country) public {
+        addrInfoMap[msg.sender].idx = idx;
+        addrInfoMap[msg.sender].state = 2;
 
-        bloodDonationHouseMap[idx].addr = _addr;
+        bloodDonationHouseMap[idx].addr = msg.sender;
         bloodDonationHouseMap[idx].name = _name;
         bloodDonationHouseMap[idx].location = _location;
         bloodDonationHouseMap[idx].phoneNumber = _phoneNumber;
         bloodDonationHouseMap[idx].country = _country;
+        questionnaireMap[_name] = idx;
 
         idx++;
     }
-    function createHospital(address _addr, string _name, string _location, string _phoneNumber, string _country) public {
-        addrInfoMap[_addr].idx = idx;
-        addrInfoMap[_addr].state = 3;
+    function createHospital(string _name, string _location, string _phoneNumber, string _country) public {
+        addrInfoMap[msg.sender].idx = idx;
+        addrInfoMap[msg.sender].state = 3;
 
-        hospitalMap[idx].addr = _addr;
+        hospitalMap[idx].addr = msg.sender;
         hospitalMap[idx].name = _name;
         hospitalMap[idx].location = _location;
         hospitalMap[idx].phoneNumber = _phoneNumber;
@@ -104,9 +119,25 @@ contract BloodChain {
 
         idx++;
     }
+
+    function createQuestionnaire(
+        string _bloodDonationHouseName, string _age, string _name,
+        string _sex, string _residentRegistrationNumber
+        ) public {
+        uint mapIdx = questionnaireMap[_bloodDonationHouseName];
+        questionnaire memory card;
+        card.addr = msg.sender;
+        card.age = _age;
+        card.name = _name;
+        card.sex = _sex;
+        card.residentRegistrationNumber = _residentRegistrationNumber;
+
+        bloodDonationHouseMap[mapIdx].questionnaireList.push(card);
+    }
     function getUserCardList(address _addr) public view returns (string[], string[], string[], uint[]){
         addrPairInfo memory addrInfo = addrInfoMap[_addr];
         uint len = userMap[addrInfo.idx].cardList.length;
+
         string[] memory serialNumbers = new string[](len);
         string[] memory bloodTypes = new string[](len);
         string[] memory sexs = new string[](len);
@@ -122,5 +153,4 @@ contract BloodChain {
 
         return (serialNumbers, bloodTypes, sexs, donationDays);
     }
-
 }
