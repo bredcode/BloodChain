@@ -11,12 +11,41 @@
     5.   헌혈의 집에서 병원에 피를 보낸다.
           병원이 1개 이상 등록되어 있을때만 보낼 수 있다.
     6.   수혈을 받은 사람은 혈액의 경로를 확인하기위해 병원에 요청해야한다.
+    
     코드 명세
     Struct
         bloodDonationCard : 헌혈 증서에 대한 정보가 담겨있다.
-                            현재 소유자, 증서번호, 혈액량
+                            증서번호, 혈액형, 성별, 헌혈일자
+        questionnaire : 문진표 정보를 나타낸다.
+                        문진표 작성자 주소, 나이, 이름, 성별, 주민등록번호, 헌혈 가능여부
+                        추가로 정식 버전에서는 더 많은 정보를 기입 할 수 있게 한다.
+        user : 사용자의 정보를 나타낸다.
+               사용자 주소, 이름, 성별, 국가, 생년월일, 헌혈 카드 보유 리스트, 문진표
+        bloodDonationHouse : 헌혈의집 정보를 나타낸다.
+                             헌혈의집 주소, 이름, 위치, 전화번호, 국가, 보유 문진표 리스트
+        hospital : 병원의 정보를 나타낸다.
+                   병원 주소, 이름, 위치, 전화번호, 국가
+        addrPairInfo : 해당하는 주소의 idx와 state(1 : 헌혈자 2 : 헌혈의집 3 : 병원)를 가진다.
+
+    Variable
+        idx : 사용자, 헌혈의집, 병원의 모든 idx를 연속적으로 담는다.
+        userCnt, bloodDonationHouseCnt, hospitalCnt : 등록된 것의 개수.
     
     mapping
-        userCardList : 해당 주소가 보유하고 있는 헌혈 카드 리스트를 가지고 있다.
-        
+        addrInfoMap : 해당 주소를 통해 idx와 state를 확인 할 수 있다.
+        userMap : user의 idx를 통해 user의 정보를 파악 할 수 있다.
+        bloodDonationHouseMap : 위와 동일(헌혈의 집 대상)
+        hospitalMap : 위와 동일(병원 대상)
+        bloodDonationHouseConvertStringToUint : 헌혈의 집 이름을 받으면 idx로 변환해준다.
+
+    function
+        createUser : 사용자를 생성해준다.
+        createBloodDonationHouse : 헌혈의집을 생성해준다.
+        createHospital : 병원을 생성해준다.
+        createQuestionnaire : 문진표를 생성할 수 있다. 이때 문진표는 사용자만 가능하고
+                              헌혈의 집이 1개 이상 존재해야만 가능하다.
+        getQuestionnaire : 문진표를 확인 할 수 있다.(사용자 및 헌혈의집)
+        setQuestionnaire : 문진표를 검수하고 헌혈이 가능하다면 canBloodDonation = true로 변환해준다.
+        getUserCardList : 현재 보유중인 헌혈증 리스트를 반환해준다.
+
 */
