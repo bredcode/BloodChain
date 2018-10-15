@@ -28,11 +28,22 @@ library SafeMath {
 contract BloodChain {
     using SafeMath for uint256;
 
+    struct blood{
+        address addr;
+        string serialNumber;
+        string bloodType;
+        string sex;
+        string name;
+        uint donationDay;
+        uint birth;
+        uint ml;
+    }
     struct bloodDonationCard{
         string serialNumber;
         string bloodType;
         string sex;
         uint donationDay;
+        uint ml;
     }
     struct questionnaire{
         address addr;
@@ -63,6 +74,7 @@ contract BloodChain {
         string phoneNumber;
         string country;
         questionnaire[] questionnaireList;
+        blood[] bloodList;
     }
     struct hospital{
         address addr;
@@ -231,7 +243,7 @@ contract BloodChain {
         userMap[userAddrInfo.idx].userQuestionnaire.canBloodDonation = _canBloodDonation;
     }
 
-    function setBloodDonationCard(address _addr, string _serialNumber, string _bloodType, string _sex, uint _donationDay) public {
+    function setBloodDonationCard(address _addr, string _serialNumber, string _bloodType, string _sex, uint _donationDay, uint _ml) public {
         addrPairInfo memory userAddrInfo = addrInfoMap[_addr];
         addrPairInfo memory houseAddrInfo = addrInfoMap[msg.sender];
         // 헌혈의집, 사용자 관계가 맞는지 확인
@@ -242,27 +254,69 @@ contract BloodChain {
 
         // 헌혈의집 문진표 리스트에 사용자가 있는지 확인 있다면 isInList = true
         uint len = bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList.length;
+        uint delIdx = 0;
         bool isInList = false;
         for(uint i = 0; i < len; i++){
             if(bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList[i].addr == _addr){
+                delIdx = i;
                 isInList = true;
+                break;
             }
         }
         require(
-            isInList == true,
+            delIdx >= 0,
             "There is no blood donator information in this blood donator house"
         );
 
         // 헌혈증서를 해당 유저의 cardList에 추가
-        bloodDonationCard memory bd;
+        bloodDonationCard memory bdc;
+        bdc.serialNumber = _serialNumber;
+        bdc.bloodType = _bloodType;
+        bdc.sex = _sex;
+        bdc.donationDay = _donationDay;
+        bdc.ml = _ml;
+        userMap[userAddrInfo.idx].cardList.push(bdc);
+
+        // 해당 유저와 헌혈의집에서 문진표 제거
+        for(i = delIdx; i < len; i++){
+            bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList[i] = bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList[i + 1];
+        }
+        delete bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList[len - 1];
+
+        questionnaire memory initQuestionnaire;
+        userMap[userAddrInfo.idx].userQuestionnaire = initQuestionnaire;
+
+        // 헌혈의집에 혈액 추가
+        blood memory bd;
+        bd.addr = _addr;
         bd.serialNumber = _serialNumber;
         bd.bloodType = _bloodType;
         bd.sex = _sex;
+        bd.name = userMap[userAddrInfo.idx].name;
         bd.donationDay = _donationDay;
-        userMap[userAddrInfo.idx].cardList.push(bd);
+        bd.birth = userMap[userAddrInfo.idx].birth;
+        bd.ml = _ml;
+        bloodDonationHouseMap[houseAddrInfo.idx].bloodList.push(bd);
     }
 
-    function getUserCardList() public view returns (string[], string[], string[], uint[]){
+    function sendBloodDonationCard(address _to) public {
+        address _from = msg.sender;
+        addrPairInfo memory fromAddrInfo = addrInfoMap[_from];
+        addrPairInfo memory toAddrInfo = addrInfoMap[_to];
+
+        uint len = userMap[fromAddrInfo.idx].cardList.length;
+        require(
+            len > 0,
+            "Sender has't blood donation card"
+        );
+
+        bloodDonationCard memory bd = userMap[fromAddrInfo.idx].cardList[len - 1];
+
+        userMap[toAddrInfo.idx].cardList.push(bd);
+        delete userMap[fromAddrInfo.idx].cardList[len - 1];
+    }
+
+    function getUserCardList() public view returns (string[], string[], string[], uint[], uint[]){
         addrPairInfo memory addrInfo = addrInfoMap[msg.sender];
         require(
             addrInfo.state == 1,
@@ -274,6 +328,7 @@ contract BloodChain {
         string[] memory bloodTypes = new string[](len);
         string[] memory sexs = new string[](len);
         uint[] memory donationDays = new uint[](len);
+        uint[] memory mls = new uint[](len);
 
         for(uint i = 0; i < len; i++){
             bloodDonationCard memory card = userMap[addrInfo.idx].cardList[i];
@@ -281,8 +336,10 @@ contract BloodChain {
             bloodTypes[i] = card.bloodType;
             sexs[i] = card.sex;
             donationDays[i] = card.donationDay;
+            mls[i] = card.ml;
         }
 
-        return (serialNumbers, bloodTypes, sexs, donationDays);
+        return (serialNumbers, bloodTypes, sexs, donationDays, mls);
     }
+
 }
