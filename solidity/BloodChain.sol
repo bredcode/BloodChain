@@ -231,6 +231,37 @@ contract BloodChain {
         userMap[userAddrInfo.idx].userQuestionnaire.canBloodDonation = _canBloodDonation;
     }
 
+    function setBloodDonationCard(address _addr, string _serialNumber, string _bloodType, string _sex, uint _donationDay) public {
+        addrPairInfo memory userAddrInfo = addrInfoMap[_addr];
+        addrPairInfo memory houseAddrInfo = addrInfoMap[msg.sender];
+        // 헌혈의집, 사용자 관계가 맞는지 확인
+        require(
+            userAddrInfo.state == 1 && houseAddrInfo.state == 2,
+            "Blood donation card is only available in blood donation houses and blood donation card is for the blood donor only"
+        );
+
+        // 헌혈의집 문진표 리스트에 사용자가 있는지 확인 있다면 isInList = true
+        uint len = bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList.length;
+        bool isInList = false;
+        for(uint i = 0; i < len; i++){
+            if(bloodDonationHouseMap[houseAddrInfo.idx].questionnaireList[i].addr == _addr){
+                isInList = true;
+            }
+        }
+        require(
+            isInList == true,
+            "There is no blood donator information in this blood donator house"
+        );
+
+        // 헌혈증서를 해당 유저의 cardList에 추가
+        bloodDonationCard memory bd;
+        bd.serialNumber = _serialNumber;
+        bd.bloodType = _bloodType;
+        bd.sex = _sex;
+        bd.donationDay = _donationDay;
+        userMap[userAddrInfo.idx].cardList.push(bd);
+    }
+
     function getUserCardList() public view returns (string[], string[], string[], uint[]){
         addrPairInfo memory addrInfo = addrInfoMap[msg.sender];
         require(

@@ -47,5 +47,5 @@
         getQuestionnaire : 문진표를 확인 할 수 있다.(사용자 및 헌혈의집)
         setQuestionnaire : 문진표를 검수하고 헌혈이 가능하다면 canBloodDonation = true로 변환해준다.
         getUserCardList : 현재 보유중인 헌혈증 리스트를 반환해준다.
-
+        setBloodDonationCard : 헌혈증서를 헌혈자에게 지급한다.
 */
